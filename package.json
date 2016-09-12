@@ -1,0 +1,16 @@
+{
+  "name": "ez-tcp-proxy",
+  "version": "1.1.0",
+  "description": "A NodeJS module for making a simple tcp proxy.",
+  "files": ["index.js"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/freehuntx/ez-tcp-proxy"
+  },
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "keywords": ["tcp", "tcp proxy", "tcp mitm", "mitm", "proxy"],
+  "author": "FreehuntX",
+  "license": "MIT"
+}

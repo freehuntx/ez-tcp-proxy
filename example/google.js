@@ -2,7 +2,7 @@ const EzTcpProxy = require('..');
 
 let tcpProxy = new EzTcpProxy('google.com', 80);
 
-tcpProxy.onConnect((socket) => {
+tcpProxy.on('connect', (socket) => {
   if(socket.type == EzTcpProxy.SocketTypes.SOURCE) {
     console.log('Source endpoint connected!');
   }
@@ -11,7 +11,7 @@ tcpProxy.onConnect((socket) => {
   }
 });
 
-tcpProxy.onDisconnect((socket) => {
+tcpProxy.on('disconnect', (socket) => {
   if(socket.type == EzTcpProxy.SocketTypes.SOURCE) {
     console.log('Source endpoint disconnected!');
   }
@@ -20,12 +20,16 @@ tcpProxy.onDisconnect((socket) => {
   }
 });
 
-tcpProxy.onData((socket, context) => {
+tcpProxy.on('packet', (socket, packet) => {
   if(socket.type == EzTcpProxy.SocketTypes.SOURCE) {
-    console.log('Source sent data!');
+    let data = packet.buffer.toString();
+    let newData = data.replace('Host: localhost:8080', 'Host: google.com');
+
+    packet.buffer = new Buffer(newData);
+    console.log('Source sent packet!');
   }
   else {
-    console.log('Target sent data!');
+    console.log('Target sent packet!');
   }
 });
 

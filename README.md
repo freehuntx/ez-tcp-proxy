@@ -5,19 +5,21 @@ I am using a "context" object, so you can replace the
 complete Buffer object.
 
 ##### Structure
-- EzTcpProxy:Object
-    - source|target:Object
+- EzTcpProxy(targetHost:String, targetPort:Number):Class
+    - (source|target):Object
         - host:String
         - port:Number
         - socket:Socket
     - start(sourcePort:Number):void
     - stop():void
-    - onConnect(callback:Function\<socket:Socket\>):void
-    - onDisconnect(callback:Function\<socket:Socket\>):void
-    - onData(callback:Function\<socket:Socket, context:Object\>):void
-        - context:Object
-            - data:Buffer
-    - onError(callback:Function\<socket:Socket, error:Error\>):void
+    - *Events*
+        - connect(callback:Function\<socket:Socket\>)
+        - disconnect(callback:Function\<socket:Socket\>)
+        - packet(callback:Function\<socket:Socket, packet:Object\>)
+            - packet:Object
+                - block:Boolean[Default: false]
+                - buffer:Buffer
+        - error(callback:Function\<socket:Socket, error:Error\>)
 - Socket:net.Socket
     - type:Enum (Additional socket variable)
         - SOURCE: 1
@@ -29,11 +31,11 @@ const EzTcpProxy = require('ez-tcp-proxy');
 
 let tcpProxy = new EzTcpProxy('google.com', 80);
 
-tcpProxy.onData((socket, context) => {
+tcpProxy.on('packet', (socket, packet) => {
   if(socket.type == EzTcpProxy.SocketTypes.SOURCE) {
-    let dataString = context.data.toString();
+    let dataString = packet.buffer.toString();
     let newString = dataString.replace('Host: localhost:8080', 'Host: google.com');
-    context.data = new Buffer(newString);
+    packet.buffer = new Buffer(newString);
   }
 });
 

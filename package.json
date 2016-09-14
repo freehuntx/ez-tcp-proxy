@@ -1,6 +1,6 @@
 {
   "name": "ez-tcp-proxy",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A NodeJS module for making a simple tcp proxy.",
   "files": ["index.js"],
   "repository": {

@@ -1,12 +1,14 @@
-const net = require('net');
+const EventEmitter = require('events'),
+      net = require('net');
 
 const SocketTypes = {
   SOURCE: 1,
   TARGET: 2
 };
 
-class EzTcpProxy {
+class EzTcpProxy extends EventEmitter {
   constructor(targetHost, targetPort) {
+    super();
     if(targetHost === undefined || targetPort === undefined)
       throw new Error('Missing host or port!');
 
@@ -49,32 +51,26 @@ class EzTcpProxy {
       this._initSocketEvents(sourceSocket, targetSocket);
 
       targetSocket.connect(this.target.port, this.target.host, () => {
-        if(this._onConnect !== undefined) this._onConnect(targetSocket);
+        this.emit('connect', targetSocket);
         sourceSocket.resume(); // Target is ready!
       });
     });
   }
 
   _initSocketEvents(sourceSocket, targetSocket) {
-    if(this._onConnect !== undefined) this._onConnect(sourceSocket);
+    this.emit('connect', sourceSocket);
 
     for(let endpoint of [sourceSocket, targetSocket]) {
       let counterEndpoint = endpoint==sourceSocket?targetSocket:sourceSocket;
 
       endpoint.on('data', (data) => {
-        let send = true;
+        let packet = {block: false, buffer: data};
 
-        if(this._onData !== undefined) {
-          let context = {data: data};
-          send = this._onData(endpoint, context);
-          data = context.data;
-          if(send === undefined) send = true; // No return = true
-        }
+        this.emit('packet', endpoint, packet);
+        if(packet.block) return;
 
-        if(send){
-          let flushed = counterEndpoint.write(data);
-          if(!flushed) endpoint.pause();
-        }
+        let flushed = counterEndpoint.write(packet.buffer);
+        if(!flushed) endpoint.pause();
       });
 
       endpoint.on('drain', () => {
@@ -83,7 +79,7 @@ class EzTcpProxy {
 
       endpoint.on('close', (hadError) => {
         counterEndpoint.end();
-        if(this._onDisconnect !== undefined) this._onDisconnect(endpoint);
+        this.emit('disconnect', endpoint);
       });
 
       endpoint.on('end', ()=>{
@@ -96,16 +92,10 @@ class EzTcpProxy {
           return;
         }
 
-        if(this._onError !== undefined) this._onError(endpoint, error);
+        this.emit('error', endpoint, error);
       });
     }
   }
-
-  // Event listener
-  onConnect(cb) { this._onConnect = cb; }
-  onDisconnect(cb) { this._onDisconnect = cb; }
-  onData(cb) { this._onData = cb; }
-  onError(cb) { this._onError = cb; }
 
   static get SocketTypes() {
     return SocketTypes;

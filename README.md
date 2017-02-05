@@ -9,7 +9,7 @@ This is a simple NodeJS library to setup a tcp proxy.
 - EzTcpProxy(targetHost:String, targetPort:Number, localPort:Number [, options:Object]):Class
     - options:Object
         - autoStart:Boolean[Default: false]
-        - autoStartDelay:Number[Default: 100] (**Value in ms**)
+        - autoStartDelay:Number[Default: 100] \(**Value in ms**\)
     - **Properties**
         - targetHost:String
         - targetPort:Number
@@ -36,7 +36,7 @@ This is a simple NodeJS library to setup a tcp proxy.
                 - block:Boolean[Default: false]
                 - buffer:Buffer
         - error \<socket:Socket, error:Error\>
-- Socket:net.Socket (*Additional **net.Socket** properties*)
+- Socket:net.Socket (*Additional 'net.Socket' properties*)
     - type:\<Enum\>EzTcpProxy.SocketTypes
         - SOURCE: 1
         - TARGET: 2

@@ -7,50 +7,64 @@ const SocketTypes = {
 };
 
 class EzTcpProxy extends EventEmitter {
-  constructor(targetHost, targetPort) {
+  constructor(targetHost, targetPort, localPort, options={}) {
     super();
-    if(targetHost === undefined || targetPort === undefined)
-      throw new Error('Missing host or port!');
 
-    this.source = {
-      host: '0.0.0.0',
-      socket: null
-    };
-    this.target = {
-      host: targetHost,
-      port: targetPort,
-      socket: null
-    };
+    if(targetHost === undefined || targetPort === undefined || localPort === undefined) {
+      throw new Error('Missing targetHost, targetPort or localPort option!');
+    }
+
+    this._options = options;
+    this._options.autoStart = this._options.autoStart===undefined ? false : this._options.autoStart;
+    this._options.autoStartDelay = this._options.autoStartDelay===undefined ? 100 : this._options.autoStartDelay;
+    this.targetHost = targetHost;
+    this.targetPort = targetPort;
+    this.localPort = localPort;
+    this.started = false;
+    this.source = null;
+    this.target = null;
 
     this._initProxy();
+    if(this._options.autoStart) {
+      setTimeout(()=>this.start(), this._options.autoStartDelay);
+    }
   }
 
-  start(sourcePort = localPort || this.source.port) {
-    if(sourcePort === undefined) throw new Error('Missing source port!');
-    if(this._proxy) this.stop();
+  start() {
+    if(this.started) {
+      console.error('Proxy already started!');
+      return;
+    }
 
-    this._proxy.listen(sourcePort);
+    this._proxy.listen(this.localPort);
+    this.started = true;
+    this.emit('start');
   }
 
   stop() {
-    if(this._proxy) {
-      this._proxy.close();
+    if(!this.started) {
+      console.error('Proxy already stopped!');
+      return;
     }
+
+    this._proxy.close();
+    this.started = false;
+    this.emit('stop');
   }
 
   _initProxy() {
     this._proxy = net.createServer((sourceSocket) => {
-      let targetSocket = new net.Socket;
-      this.source.socket = sourceSocket;
-      this.target.socket = targetSocket;
-      
       sourceSocket.pause(); // Wait till the target socket is ready
+
+      let targetSocket = new net.Socket;
+      this._initSocketEvents(sourceSocket, targetSocket);
+
+      this.source = sourceSocket;
+      this.target = targetSocket;
       sourceSocket.type = SocketTypes.SOURCE;
       targetSocket.type = SocketTypes.TARGET;
 
-      this._initSocketEvents(sourceSocket, targetSocket);
-
-      targetSocket.connect(this.target.port, this.target.host, () => {
+      targetSocket.connect(this.targetPort, this.targetHost, () => {
         this.emit('connect', targetSocket);
         sourceSocket.resume(); // Target is ready!
       });
@@ -63,6 +77,10 @@ class EzTcpProxy extends EventEmitter {
     for(let endpoint of [sourceSocket, targetSocket]) {
       let counterEndpoint = endpoint==sourceSocket?targetSocket:sourceSocket;
 
+      endpoint.on('drain', () => {
+        endpoint.resume();
+      });
+
       endpoint.on('data', (data) => {
         let packet = {block: false, buffer: data};
 
@@ -71,10 +89,6 @@ class EzTcpProxy extends EventEmitter {
 
         let flushed = counterEndpoint.write(packet.buffer);
         if(!flushed) endpoint.pause();
-      });
-
-      endpoint.on('drain', () => {
-        endpoint.resume();
       });
 
       endpoint.on('close', (hadError) => {

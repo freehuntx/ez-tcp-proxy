@@ -1,6 +1,6 @@
 const EzTcpProxy = require('..');
 
-let tcpProxy = new EzTcpProxy('google.com', 80);
+let tcpProxy = new EzTcpProxy('google.com', 80, 8080, {autoStart: true});
 
 tcpProxy.on('connect', (socket) => {
   if(socket.type == EzTcpProxy.SocketTypes.SOURCE) {
@@ -33,5 +33,10 @@ tcpProxy.on('packet', (socket, packet) => {
   }
 });
 
-tcpProxy.start(8080);
-console.log('TCP Proxy listening on port: 8080');
+tcpProxy.on('start', ()=>{
+  console.log(`TCP Proxy started on port: ${tcpProxy.localPort}`);
+});
+
+tcpProxy.on('stop', ()=>{
+  console.log('TCP Proxy stopped');
+});

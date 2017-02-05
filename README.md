@@ -6,8 +6,15 @@ This is a simple NodeJS library to setup a tcp proxy.
 - Block packets
 
 ##### Structure
-- EzTcpProxy(targetHost:String, targetPort:Number):Class
+- EzTcpProxy(targetHost:String, targetPort:Number, localPort:Number [, options:Object]):Class
+    - options:Object
+        - autoStart:Boolean[Default: false]
+        - autoStartDelay:Number[Default: 100] (**Value in ms**)
     - **Properties**
+        - targetHost:String
+        - targetPort:Number
+        - localPort:Number
+        - started:Boolean
         - source:Object
             - host:String
             - port:Number
@@ -20,6 +27,8 @@ This is a simple NodeJS library to setup a tcp proxy.
         - start(sourcePort:Number):void
         - stop():void
     - **Events**
+        - start
+        - stop
         - connect \<socket:Socket\>
         - disconnect \<socket:Socket\>
         - packet \<socket:Socket, packet:Object\>
@@ -31,13 +40,16 @@ This is a simple NodeJS library to setup a tcp proxy.
     - type:\<Enum\>EzTcpProxy.SocketTypes
         - SOURCE: 1
         - TARGET: 2
+- Packet:Object
+    - block:Boolean[Default: false]
+    - buffer:Buffer
 
 ##### example
 ```
 const EzTcpProxy = require('ez-tcp-proxy');
-
-let tcpProxy = new EzTcpProxy('google.com', 80);
-
+  
+let tcpProxy = new EzTcpProxy('google.com', 80, 8080, {autoStart: true});
+  
 tcpProxy.on('packet', (socket, packet) => {
   if(socket.type == EzTcpProxy.SocketTypes.SOURCE) {
     let dataString = packet.buffer.toString();
@@ -45,6 +57,4 @@ tcpProxy.on('packet', (socket, packet) => {
     packet.buffer = new Buffer(newString);
   }
 });
-
-tcpProxy.start(8080);
 ```

@@ -1,27 +1,34 @@
 #### ez-tcp-proxy
-A simple tcp proxy for NodeJS!
+This is a simple NodeJS library to setup a tcp proxy.  
 
-I am using a "context" object, so you can replace the
-complete Buffer object.
+##### Features
+- Change packet data being sent/received
+- Block packets
 
 ##### Structure
 - EzTcpProxy(targetHost:String, targetPort:Number):Class
-    - (source|target):Object
-        - host:String
-        - port:Number
-        - socket:Socket
-    - start(sourcePort:Number):void
-    - stop():void
-    - *Events*
-        - connect(callback:Function\<socket:Socket\>)
-        - disconnect(callback:Function\<socket:Socket\>)
-        - packet(callback:Function\<socket:Socket, packet:Object\>)
+    - **Properties**
+        - source:Object
+            - host:String
+            - port:Number
+            - socket:Socket
+        - target:Object
+            - host:String
+            - port:Number
+            - socket:Socket
+    - **Methods**
+        - start(sourcePort:Number):void
+        - stop():void
+    - **Events**
+        - connect \<socket:Socket\>
+        - disconnect \<socket:Socket\>
+        - packet \<socket:Socket, packet:Object\>
             - packet:Object
                 - block:Boolean[Default: false]
                 - buffer:Buffer
-        - error(callback:Function\<socket:Socket, error:Error\>)
-- Socket:net.Socket
-    - type:Enum (Additional socket variable)
+        - error \<socket:Socket, error:Error\>
+- Socket:net.Socket (*Additional **net.Socket** properties*)
+    - type:\<Enum\>EzTcpProxy.SocketTypes
         - SOURCE: 1
         - TARGET: 2
 
